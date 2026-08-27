@@ -18,7 +18,7 @@ contraseña normal.
 2. Activa la verificación en dos pasos si no la tienes activada (es obligatorio
    para poder crear contraseñas de aplicación).
 3. Ve a https://myaccount.google.com/apppasswords
-4. Crea una nueva contraseña de aplicación (puedes llamarla "fabula-diaria").
+4. Crea una nueva contraseña de aplicación.
 5. Copia la contraseña de 16 caracteres que te da Google. La necesitarás en el
    paso 3.
 
@@ -84,4 +84,5 @@ Para comprobar que todo funciona sin esperar a mañana:
 Este proceso no usa ninguna API de pago ni consume tokens de Claude: todo el
 contenido ya está generado y guardado en `fabulas_completas.json`. GitHub
 Actions es gratuito para este uso (muy por debajo del límite gratuito mensual
-para repositorios privados).
+para repositorios privados). El archivo de las Fábulas de Esopo es un pdf descargado 
+de elejandria.com
