@@ -73,7 +73,7 @@ Para comprobar que todo funciona sin esperar a mañana:
 ## Archivos de este repositorio
 
 - `fabulas_completas.json`: las 293 fábulas con su texto, preguntas, significado
-  y ejemplo histórico.
+  y ejemplo histórico. Fuentes: fábulas (Elejandria) y el resto (Claude).
 - `send_fabula.py`: el script que arma y envía el correo.
 - `estado.json`: guarda qué fábula toca mañana (se actualiza solo cada día).
 - `.github/workflows/fabula-diaria.yml`: la configuración de GitHub Actions
