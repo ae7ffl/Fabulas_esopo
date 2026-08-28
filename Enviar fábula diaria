@@ -1,0 +1,52 @@
+name: Enviar fábula diaria
+
+on:
+  schedule:
+    # 07:00 hora de España (CET/CEST). GitHub Actions usa UTC:
+    # - En horario de invierno (CET, UTC+1) 07:00 local = 06:00 UTC
+    # - En horario de verano (CEST, UTC+2) 07:00 local = 05:00 UTC
+    # Usamos 05:00 y 06:00 UTC para cubrir ambos casos; el workflow
+    # comprueba la hora local real antes de enviar (ver el paso "Check time").
+    - cron: '0 5 * * *'
+    - cron: '0 6 * * *'
+  workflow_dispatch: {}  # permite lanzarlo manualmente para probar
+
+jobs:
+  enviar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Comprobar que es la hora correcta en España
+        id: check_time
+        run: |
+          HORA_MADRID=$(TZ="Europe/Madrid" date +%H)
+          echo "Hora actual en Madrid: $HORA_MADRID"
+          if [ "$HORA_MADRID" = "07" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run_it=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_it=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Enviar fábula
+        if: steps.check_time.outputs.run_it == 'true'
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DEST_EMAIL: ${{ secrets.DEST_EMAIL }}
+        run: python send_fabula.py
+
+      - name: Guardar el nuevo estado (contador) en el repositorio
+        if: steps.check_time.outputs.run_it == 'true'
+        run: |
+          git config user.name "fabula-bot"
+          git config user.email "fabula-bot@users.noreply.github.com"
+          git add estado.json
+          git diff --staged --quiet || git commit -m "Actualiza contador de fábula diaria"
+          git push
