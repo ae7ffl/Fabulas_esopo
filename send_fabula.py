@@ -3,25 +3,31 @@
 Envía por correo la fábula de Esopo correspondiente al día.
 
 Cómo elige la fábula del día:
-- Usa un contador guardado en el archivo 'estado.json' del propio
-  repositorio. Cada vez que se ejecuta, envía la siguiente fábula de
-  la lista (en el orden del PDF original) y avanza el contador.
-- Cuando llega a la fábula 293, vuelve a empezar por la 1.
+- Usa un contador guardado en 'estado.json'. Cada vez que se envía,
+  avanza al siguiente número de la lista (en el orden del PDF original)
+  y, al llegar a la 293, vuelve a empezar por la 1.
 
-Variables de entorno necesarias (se configuran como "Secrets" en GitHub):
-- GMAIL_USER: la dirección de Gmail desde la que se envía el correo
-- GMAIL_APP_PASSWORD: la contraseña de aplicación de Gmail (no la contraseña normal)
-- DEST_EMAIL: la dirección de correo donde quieres recibir la fábula
+Protección contra duplicados y retrasos:
+- GitHub a veces ejecuta el workflow programado más tarde de lo previsto.
+  Por eso, en vez de exigir que sea una hora exacta, el script guarda la
+  FECHA (no la hora) del último envío en 'estado.json'. Si hoy ya se envió,
+  no vuelve a enviar aunque se ejecute otra vez ese mismo día.
+
+Variables de entorno necesarias (Secrets en GitHub):
+- GMAIL_USER, GMAIL_APP_PASSWORD, DEST_EMAIL
 """
 
 import json
 import os
 import smtplib
+from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from zoneinfo import ZoneInfo
 
 DATA_FILE = "fabulas_completas.json"
 STATE_FILE = "estado.json"
+ZONA_MADRID = ZoneInfo("Europe/Madrid")
 
 
 def cargar_fabulas():
@@ -33,7 +39,7 @@ def cargar_estado():
     if os.path.exists(STATE_FILE):
         with open(STATE_FILE, "r", encoding="utf-8") as f:
             return json.load(f)
-    return {"indice": 0}
+    return {"indice": 0, "ultima_fecha_enviada": None}
 
 
 def guardar_estado(estado):
@@ -101,15 +107,22 @@ def enviar_correo(fabula):
 
 
 def main():
-    fabulas = cargar_fabulas()
+    hoy_madrid = datetime.now(ZONA_MADRID).date().isoformat()
+
     estado = cargar_estado()
 
+    if estado.get("ultima_fecha_enviada") == hoy_madrid:
+        print(f"Ya se envió la fábula de hoy ({hoy_madrid}). No se hace nada.")
+        return
+
+    fabulas = cargar_fabulas()
     indice = estado["indice"] % len(fabulas)
     fabula = fabulas[indice]
 
     enviar_correo(fabula)
 
     estado["indice"] = (indice + 1) % len(fabulas)
+    estado["ultima_fecha_enviada"] = hoy_madrid
     guardar_estado(estado)
 
 
